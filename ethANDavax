@@ -1,0 +1,41 @@
+pragma solidity ^0.8.0;
+
+contract ExampleContract {
+    uint256 public balance;
+    address public owner;
+
+    constructor() {
+        owner = msg.sender;
+        balance = 0;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Caller is not the owner");
+        _;
+    }
+
+    function deposit(uint256 amount) public payable {
+        require(msg.value == amount, "Amount mismatch with sent value");
+        balance += amount;
+    }
+
+    function withdraw(uint256 amount) public onlyOwner {
+        require(amount <= balance, "Insufficient balance");
+        balance -= amount;
+        payable(msg.sender).transfer(amount);
+    }
+
+    function checkStateConsistency() public view {
+        assert(balance >= 0);
+    }
+
+    function customRevertExample(uint256 amount) public pure {
+        if (amount == 0) {
+            revert("Amount cannot be zero");
+        }
+    }
+
+    function resetBalance() public onlyOwner {
+        balance = 0;
+    }
+}

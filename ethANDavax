@@ -1,41 +1,56 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract ExampleContract {
-    uint256 public balance;
+contract SmartContractExample {
     address public owner;
-
+    uint256 public balance;
+    
     constructor() {
+        // Set the owner to the address that deploys the contract
         owner = msg.sender;
-        balance = 0;
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Caller is not the owner");
-        _;
+    // Function to deposit Ether into the contract
+    function deposit() public payable {
+        // Use require to ensure the sent value is greater than zero
+        require(msg.value > 0, "Deposit amount must be greater than zero.");
+        
+        // Update the balance
+        balance += msg.value;
     }
 
-    function deposit(uint256 amount) public payable {
-        require(msg.value == amount, "Amount mismatch with sent value");
-        balance += amount;
-    }
-
-    function withdraw(uint256 amount) public onlyOwner {
-        require(amount <= balance, "Insufficient balance");
+    // Function to withdraw Ether from the contract
+    function withdraw(uint256 amount) public {
+        // Use require to ensure only the owner can withdraw
+        require(msg.sender == owner, "Only the owner can withdraw funds.");
+        
+        // Use require to check if there is enough balance
+        require(amount <= balance, "Insufficient balance.");
+        
+        // Use assert to check for any unexpected overflow
+        assert(balance - amount <= balance);
+        
+        // Update the balance before transferring to prevent reentrancy attacks
         balance -= amount;
-        payable(msg.sender).transfer(amount);
+        
+        // Transfer the amount to the owner
+        payable(owner).transfer(amount);
     }
 
-    function checkStateConsistency() public view {
-        assert(balance >= 0);
-    }
-
-    function customRevertExample(uint256 amount) public pure {
-        if (amount == 0) {
-            revert("Amount cannot be zero");
+    // Function to demonstrate revert
+    function transferOwnership(address newOwner) public {
+        // Only the current owner can transfer ownership
+        if (msg.sender != owner) {
+            // Use revert to revert the transaction with an error message
+            revert("Only the owner can transfer ownership.");
         }
+
+        // Transfer ownership to the new owner
+        owner = newOwner;
     }
 
-    function resetBalance() public onlyOwner {
-        balance = 0;
+    // Function to check the balance of the contract
+    function getBalance() public view returns (uint256) {
+        return balance;
     }
 }
